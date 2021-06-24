@@ -318,20 +318,38 @@ func createEnvironment(project *types.Project, service types.ServiceConfig) ([]e
 }
 
 func getLogConfiguration(service types.ServiceConfig, project *types.Project) *ecs.TaskDefinition_LogConfiguration {
-	options := map[string]string{
-		"awslogs-region":        cloudformation.Ref("AWS::Region"),
-		"awslogs-group":         cloudformation.Ref("LogGroup"),
-		"awslogs-stream-prefix": project.Name,
-	}
+	options := map[string]string{}
+	logDriver := ecsapi.LogDriverAwslogs
 	if service.Logging != nil {
-		for k, v := range service.Logging.Options {
-			if strings.HasPrefix(k, "awslogs-") {
-				options[k] = v
+		if service.Logging.Driver == ecsapi.LogDriverAwslogs {
+			options["awslogs-region"] = cloudformation.Ref("AWS::Region")
+			options["awslogs-group"] = cloudformation.Ref("LogGroup")
+			options["awslogs-stream-prefix"] = project.Name
+			for k, v := range service.Logging.Options {
+				if strings.HasPrefix(k, "awslogs-") {
+					options[k] = v
+				}
+			}
+		}
+		if service.Logging.Driver == ecsapi.LogDriverSplunk {
+			logDriver = ecsapi.LogDriverSplunk
+			for k, v := range service.Logging.Options {
+				if strings.HasPrefix(k, "splunk-") {
+					options[k] = v
+				}
+			}
+		}
+		if service.Logging.Driver == ecsapi.LogDriverAwsfirelens {
+			logDriver = ecsapi.LogDriverAwsfirelens
+			for k, v := range service.Logging.Options {
+				if strings.HasPrefix(k, "awsfirelens-") {
+					options[k] = v
+				}
 			}
 		}
 	}
 	logConfiguration := &ecs.TaskDefinition_LogConfiguration{
-		LogDriver: ecsapi.LogDriverAwslogs,
+		LogDriver: logDriver,
 		Options:   options,
 	}
 	return logConfiguration

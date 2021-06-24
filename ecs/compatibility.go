@@ -148,7 +148,7 @@ func (c *fargateCompatibilityChecker) CheckCapAdd(service *types.ServiceConfig) 
 }
 
 func (c *fargateCompatibilityChecker) CheckLoggingDriver(config *types.LoggingConfig) {
-	if config.Driver != "" && config.Driver != "awslogs" {
+	if config.Driver != "" && config.Driver != "awslogs" && config.Driver != "splunk" && config.Driver != "awsfirelens" {
 		c.Unsupported("services.logging.driver %s is not supported", config.Driver)
 	}
 }
